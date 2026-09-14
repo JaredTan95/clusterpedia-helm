@@ -81,6 +81,11 @@ data:
         local yaml_file="$1"
         eval "$(parse_yaml "$yaml_file")"
 
+        if [ -n "$DB_DSN" ]
+        then
+            dsn="$DB_DSN"
+        fi
+
         if [ $type == "mysql" ]
         then
             eval $(parse_mysql_dsn "$dsn")

@@ -62,6 +62,13 @@ spec:
               secretKeyRef:
                 name: {{ include "clusterpedia.internalstorage.fullname" . }}
                 key: password
+          {{- if and (kindIs "map" .Values.externalStorage.dsn) .Values.externalStorage.dsn.secretKeyRef.name }}
+          - name: DB_DSN
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "clusterpedia.storage.dsn.secretName" . }}
+                key: {{ include "clusterpedia.storage.dsn.secretKey" . }}
+          {{- end }}
         volumeMounts:
         - name: internalstorage-config
           mountPath: /etc/clusterpedia/storage
@@ -95,13 +102,22 @@ spec:
             done;
             echo 'DataBase OK ✓'
           {{- end }}
-      {{- if eq (include "clusterpedia.storage.type" .) "mysql" }}
+      {{- if or (eq (include "clusterpedia.storage.type" .) "mysql") (and (kindIs "map" .Values.externalStorage.dsn) .Values.externalStorage.dsn.secretKeyRef.name) }}
         env:
+        {{- if eq (include "clusterpedia.storage.type" .) "mysql" }}
           - name: DB_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: {{ include "clusterpedia.internalstorage.fullname" . }}
                 key: password
+        {{- end }}
+        {{- if and (kindIs "map" .Values.externalStorage.dsn) .Values.externalStorage.dsn.secretKeyRef.name }}
+          - name: DB_DSN
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "clusterpedia.storage.dsn.secretName" . }}
+                key: {{ include "clusterpedia.storage.dsn.secretKey" . }}
+        {{- end }}
       {{- end }}
         volumeMounts:
         - name: internalstorage-config
@@ -142,6 +158,13 @@ spec:
             secretKeyRef:
               name: {{ include "clusterpedia.internalstorage.fullname" . }}
               key: password
+        {{- if and (kindIs "map" .Values.externalStorage.dsn) .Values.externalStorage.dsn.secretKeyRef.name }}
+        - name: DB_DSN
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "clusterpedia.storage.dsn.secretName" . }}
+              key: {{ include "clusterpedia.storage.dsn.secretKey" . }}
+        {{- end }}
         {{- include "clusterpedia.apiserver.tracing.env" . | nindent 8 }}
         {{- if .Values.apiserver.enableSHA1Cert }}
         - name: GODEBUG
